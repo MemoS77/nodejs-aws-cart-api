@@ -22,6 +22,7 @@ export class AppController {
     return {
       statusCode: HttpStatus.OK,
       message: 'OK',
+      date: Date.now(),
     }
   }
 

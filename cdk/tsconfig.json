@@ -6,7 +6,9 @@
       "es2020",
       "dom"
     ],
-    "declaration": true,
+    "outDir": "build",
+    "declaration": false,
+    "declarationMap": false,
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
