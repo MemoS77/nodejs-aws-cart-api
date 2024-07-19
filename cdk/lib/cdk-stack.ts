@@ -12,19 +12,19 @@ export class CdkStack extends cdk.Stack {
     super(scope, id, props)
 
     const environment = {
-      dbUser: process.env.DB_USER!,
-      dbPass: process.env.DB_PASS!,
-      dbHost: process.env.DB_HOST!,
-      dbPort: process.env.DB_PORT!,
-      dbName: process.env.DB_NAME!,
+      DB_USER: process.env.DB_USER!,
+      DB_PASS: process.env.DB_PASS!,
+      DB_HOST: process.env.DB_HOST!,
+      DB_PORT: process.env.DB_PORT!,
+      DB_NAME: process.env.DB_NAME!,
     }
 
     if (
-      !environment.dbUser ||
-      !environment.dbPass ||
-      !environment.dbHost ||
-      !environment.dbPort ||
-      !environment.dbName
+      !environment.DB_USER ||
+      !environment.DB_PASS ||
+      !environment.DB_HOST ||
+      !environment.DB_PORT ||
+      !environment.DB_NAME
     ) {
       throw new Error('DB data is not set')
     }
@@ -40,6 +40,11 @@ export class CdkStack extends cdk.Stack {
     const api = new apigateway.LambdaRestApi(this, 'NestCartApi', {
       handler: nestLambda,
       proxy: true,
+      defaultCorsPreflightOptions: {
+        allowOrigins: apigateway.Cors.ALL_ORIGINS,
+        allowMethods: apigateway.Cors.ALL_METHODS,
+        allowHeaders: ['Content-Type', 'Authorization'],
+      },
     })
 
     new cdk.CfnOutput(this, 'cart', {

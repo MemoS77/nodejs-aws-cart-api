@@ -16,6 +16,7 @@ export class DBService {
   }
 
   async transaction(queries: { query: string; params?: any[] }[]) {
+    console.log('TRANSACTION', queries)
     const client = await this.pool.connect()
     try {
       await client.query('BEGIN')

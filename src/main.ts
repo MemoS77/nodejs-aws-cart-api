@@ -13,6 +13,11 @@ async function bootstrap() {
   const eApp = express()
   const adapter = new ExpressAdapter(eApp)
   const app = await NestFactory.create(AppModule, adapter)
+  app.enableCors({
+    origin: '*',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: 'Content-Type, Accept, Authorization',
+  })
   await app.init()
   console.log(`Bootstrap called #${instanceId}`)
   return awsServerlessExpress.createServer(eApp)

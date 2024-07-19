@@ -9,15 +9,16 @@ import { Pool } from 'pg'
     {
       provide: 'POSTGRES',
       useFactory: async () => {
+        console.log('Creating DB Pool', process.env)
         const pool = new Pool({
-          host: process.env.PG_HOST,
-          user: process.env.PG_USER,
-          password: process.env.PG_PASSWORD,
-          database: process.env.PG_DATABASE,
+          host: process.env.DB_HOST,
+          user: process.env.DB_USER,
+          password: process.env.DB_PASS,
+          database: process.env.DB_NAME,
           port: +(process.env.PG_PORT || 5432),
-          max: +(process.env.PG_POOL_SIZE || 10),
+          max: 10,
           idleTimeoutMillis: 30000,
-          connectionTimeoutMillis: 2000,
+          connectionTimeoutMillis: 3000,
         })
 
         return pool
