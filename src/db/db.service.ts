@@ -1,6 +1,8 @@
 import { Injectable, Inject } from '@nestjs/common'
 import { Pool } from 'pg'
 
+export type QueryItem = { query: string; params?: any[] }
+
 @Injectable()
 export class DBService {
   constructor(@Inject('POSTGRES') private readonly pool: Pool) {}
@@ -15,7 +17,7 @@ export class DBService {
     }
   }
 
-  async transaction(queries: { query: string; params?: any[] }[]) {
+  async transaction(queries: QueryItem[]) {
     console.log('TRANSACTION', queries)
     const client = await this.pool.connect()
     try {

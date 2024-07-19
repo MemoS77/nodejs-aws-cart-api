@@ -1,15 +1,19 @@
 import { Injectable } from '@nestjs/common'
 import { v4 } from 'uuid'
 import { Cart, CartStatuses } from '../models'
-import { DBService } from '../../db/db.service'
+import { DBService, QueryItem } from '../../db/db.service'
 
 @Injectable()
 export class CartService {
   constructor(private readonly dbService: DBService) {}
-  private userCarts: Record<string, Cart> = {}
 
-  findByUserId(userId: string): Cart {
-    return this.userCarts[userId]
+  async findByUserId(userId: string): Promise<Cart> {
+    //return this.userCarts[userId]
+    const res = await this.dbService.query(
+      `SELECT * FROM carts WHERE user_id = $1`,
+      [userId],
+    )
+    return res.rows[0]
   }
 
   async createByUserId(userId: string) {
@@ -23,19 +27,16 @@ export class CartService {
       status: CartStatuses.OPEN,
     }
 
-    await this.dbService.transaction([
-      {
-        query: `INSERT INTO carts (id, user_id, created_at, updated_at, status) VALUES ($1, $2, $3, $4, $5)`,
-        params: [
-          userCart.id,
-          userCart.user_id,
-          userCart.created_at,
-          userCart.updated_at,
-          userCart.status,
-        ],
-      },
-    ])
-    this.userCarts[userId] = userCart
+    await this.dbService.query(
+      `INSERT INTO carts (id, user_id, created_at, updated_at, status) VALUES ($1, $2, $3, $4, $5)`,
+      [
+        userCart.id,
+        userCart.user_id,
+        userCart.created_at,
+        userCart.updated_at,
+        userCart.status,
+      ],
+    )
 
     return userCart
   }
@@ -59,12 +60,28 @@ export class CartService {
       items: [...items],
     }
 
-    this.userCarts[userId] = { ...updatedCart }
+    const queryList: QueryItem[] = []
+    queryList.push({
+      query: `update carts set updated_at = $1 WHERE user_id = $2 and status = 'OPEN'`,
+      params: [new Date().toISOString(), userId],
+    })
+
+    updatedCart.items.forEach((item) => {
+      queryList.push({
+        query: `insert into cart_items (cart_id, product_id, count) values ($1, $2, $3)`,
+        params: [id, item.product.id, item.count],
+      })
+    })
+
+    this.dbService.transaction(queryList)
 
     return { ...updatedCart }
   }
 
   removeByUserId(userId): void {
-    this.userCarts[userId] = null
+    this.dbService.query(
+      `update carts set status = 'ORDERED' WHERE user_id = $1 and status = 'OPEN'`,
+      [userId],
+    )
   }
 }

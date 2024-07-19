@@ -17,7 +17,7 @@ import { AppRequest, getUserIdFromRequest } from '../shared'
 import { calculateCartTotal } from './models-rules'
 import { CartService } from './services'
 
-@Controller('profile/cart')
+@Controller('api/profile/cart')
 export class CartController {
   constructor(
     private cartService: CartService,
@@ -73,9 +73,9 @@ export class CartController {
   // @UseGuards(JwtAuthGuard)
   // @UseGuards(BasicAuthGuard)
   @Post('checkout')
-  checkout(@Req() req: AppRequest, @Body() body) {
+  async checkout(@Req() req: AppRequest, @Body() body) {
     const userId = getUserIdFromRequest(req)
-    const cart = this.cartService.findByUserId(userId)
+    const cart = await this.cartService.findByUserId(userId)
 
     if (!(cart && cart.items.length)) {
       const statusCode = HttpStatus.BAD_REQUEST
