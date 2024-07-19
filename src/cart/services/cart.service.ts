@@ -1,19 +1,31 @@
 import { Injectable } from '@nestjs/common'
 import { v4 } from 'uuid'
-import { Cart, CartStatuses } from '../models'
+import { Cart, CartItem, CartStatuses } from '../models'
 import { DBService, QueryItem } from '../../db/db.service'
 
 @Injectable()
 export class CartService {
   constructor(private readonly dbService: DBService) {}
 
+  async getCartItems(cartId: string): Promise<CartItem[]> {
+    const res = await this.dbService.query(
+      `SELECT * FROM cart_items WHERE cart_id = $1`,
+      [cartId],
+    )
+    return res.rows
+  }
+
   async findByUserId(userId: string): Promise<Cart> {
     //return this.userCarts[userId]
     const res = await this.dbService.query(
-      `SELECT * FROM carts WHERE user_id = $1`,
+      `SELECT * FROM carts WHERE user_id = $1 and status = 'OPEN' limit 1`,
       [userId],
     )
-    return res.rows[0]
+    if (res.rowCount === 0) return null
+    return {
+      ...res.rows[0],
+      items: await this.getCartItems(res.rows[0].id),
+    }
   }
 
   async createByUserId(userId: string) {
@@ -42,12 +54,8 @@ export class CartService {
   }
 
   async findOrCreateByUserId(userId: string): Promise<Cart> {
-    const userCart = this.findByUserId(userId)
-
-    if (userCart) {
-      return userCart
-    }
-
+    const userCart = await this.findByUserId(userId)
+    if (userCart) return userCart
     return await this.createByUserId(userId)
   }
 
