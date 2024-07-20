@@ -81,13 +81,13 @@ export class CartService {
       })
     })
 
-    this.dbService.transaction(queryList)
+    await this.dbService.transaction(queryList)
 
     return { ...updatedCart }
   }
 
-  removeByUserId(userId): void {
-    this.dbService.query(
+  async removeByUserId(userId) {
+    await this.dbService.query(
       `update carts set status = 'ORDERED' WHERE user_id = $1 and status = 'OPEN'`,
       [userId],
     )

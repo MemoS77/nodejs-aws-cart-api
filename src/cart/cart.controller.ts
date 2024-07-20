@@ -8,6 +8,7 @@ import {
   Post,
   UseGuards,
   HttpStatus,
+  InternalServerErrorException,
 } from '@nestjs/common'
 
 // import { BasicAuthGuard, JwtAuthGuard } from '../auth';
@@ -16,12 +17,14 @@ import { AppRequest, getUserIdFromRequest } from '../shared'
 
 import { calculateCartTotal } from './models-rules'
 import { CartService } from './services'
+import { DBService } from '../db/db.service'
 
-@Controller('profile/cart')
+@Controller('api/profile/cart')
 export class CartController {
   constructor(
     private cartService: CartService,
     private orderService: OrderService,
+    private dbService: DBService,
   ) {}
 
   // @UseGuards(JwtAuthGuard)
@@ -89,19 +92,27 @@ export class CartController {
 
     const { id: cartId, items } = cart
     const total = calculateCartTotal(cart)
-    const order = this.orderService.create({
-      ...body, // TODO: validate and pick only necessary data
-      userId,
-      cartId,
-      items,
-      total,
-    })
-    this.cartService.removeByUserId(userId)
 
-    return {
-      statusCode: HttpStatus.OK,
-      message: 'OK',
-      data: { order },
+    let connection
+    try {
+      connection = await this.dbService.startTransaction()
+      const order = await this.orderService.create({
+        ...body,
+        userId,
+        cartId,
+        items,
+        total,
+      })
+      await this.cartService.removeByUserId(userId)
+      await this.dbService.commit(connection)
+      return {
+        statusCode: HttpStatus.OK,
+        message: 'OK',
+        data: { order },
+      }
+    } catch (error) {
+      await this.dbService.rollback(connection)
+      throw new InternalServerErrorException("Transaction can't be completed")
     }
   }
 }

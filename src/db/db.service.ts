@@ -17,6 +17,20 @@ export class DBService {
     }
   }
 
+  async startTransaction() {
+    const client = await this.pool.connect()
+    await client.query('BEGIN')
+    return client
+  }
+
+  async commit(client) {
+    await client.query('COMMIT')
+  }
+
+  async rollback(client) {
+    await client.query('ROLLBACK')
+  }
+
   async transaction(queries: QueryItem[]) {
     console.log('TRANSACTION', queries)
     const client = await this.pool.connect()
