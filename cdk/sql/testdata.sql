@@ -21,5 +21,5 @@ INSERT INTO cart_items (cart_id, product_id, count) VALUES
     ('6c54f1ee-d290-4b01-90e6-d701748f0852', 'a290f1ee-6c54-4b01-90e6-d701748f0856', 3),
 
     ('1c54f1ee-d290-4b01-90e6-d701748f0852', 'b290f1ee-6c54-4b01-90e6-d701748f0856', 20),
-    ('79b5f3c5-5b44-4eb9-9d45-4df07e925f5b', '5f3c5b44-79b5-4eb9-9d45-4df07e925f5c', 10),
-    ('79b5f3c5-5b44-4eb9-9d45-4df07e925f5b', '1f3c5b44-79b5-4eb9-9d45-4df07e925f5d', 4);
+    ('a8b5b47b-41a7-42e2-8216-51fb9ecbad07', '5f3c5b44-79b5-4eb9-9d45-4df07e925f5c', 10),
+    ('a8b5b47b-41a7-42e2-8216-51fb9ecbad07', '1f3c5b44-79b5-4eb9-9d45-4df07e925f5d', 4);

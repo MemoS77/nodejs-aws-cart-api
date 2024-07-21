@@ -9,7 +9,7 @@ export class CartService {
 
   async getCartItems(cartId: string): Promise<CartItem[]> {
     const res = await this.dbService.query(
-      `SELECT * FROM cart_items WHERE cart_id = $1`,
+      `SELECT product_id, count FROM cart_items WHERE cart_id = $1`,
       [cartId],
     )
     return res.rows
