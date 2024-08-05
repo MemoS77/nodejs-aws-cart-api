@@ -1,0 +1,14 @@
+# modules will be downloaded in runtime
+node_modules/
+# Git files
+.git/
+# AWS CDK files not need
+cdk/
+# Build will be created in docker
+dist/
+# We don't need tests
+test/
+
+# other files
+.gitignore
+README.md

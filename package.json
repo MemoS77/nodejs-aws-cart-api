@@ -6,6 +6,9 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
+    "docker:build": "docker-compose build",
+    "docker:start": "docker-compose up -d",
+    "docker:stop": "docker-compose down",
     "prebuild": "rimraf dist",
     "build": "nest build --webpack",
     "deploy": "npm run build && cd cdk && cdk deploy",
@@ -24,7 +27,6 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@codegenie/serverless-express": "^4.14.1",
     "@nestjs/common": "^10.0.3",
     "@nestjs/config": "^3.0.0",
     "@nestjs/core": "^10.0.3",
