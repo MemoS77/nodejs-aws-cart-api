@@ -1,55 +1,95 @@
-import { Injectable } from '@nestjs/common';
-
-import { v4 } from 'uuid';
-
-import { Cart } from '../models';
+import { Injectable } from '@nestjs/common'
+import { v4 } from 'uuid'
+import { Cart, CartItem, CartStatuses } from '../models'
+import { DBService, QueryItem } from '../../db/db.service'
 
 @Injectable()
 export class CartService {
-  private userCarts: Record<string, Cart> = {};
+  constructor(private readonly dbService: DBService) {}
 
-  findByUserId(userId: string): Cart {
-    return this.userCarts[ userId ];
+  async getCartItems(cartId: string): Promise<CartItem[]> {
+    const res = await this.dbService.query(
+      `SELECT product_id, count FROM cart_items WHERE cart_id = $1`,
+      [cartId],
+    )
+    return res.rows
   }
 
-  createByUserId(userId: string) {
-    const id = v4();
+  async findByUserId(userId: string): Promise<Cart> {
+    //return this.userCarts[userId]
+    const res = await this.dbService.query(
+      `SELECT * FROM carts WHERE user_id = $1 and status = 'OPEN' limit 1`,
+      [userId],
+    )
+    if (res.rowCount === 0) return null
+    return {
+      ...res.rows[0],
+      items: await this.getCartItems(res.rows[0].id),
+    }
+  }
+
+  async createByUserId(userId: string) {
+    const id = v4()
     const userCart = {
       id,
       items: [],
-    };
-
-    this.userCarts[ userId ] = userCart;
-
-    return userCart;
-  }
-
-  findOrCreateByUserId(userId: string): Cart {
-    const userCart = this.findByUserId(userId);
-
-    if (userCart) {
-      return userCart;
+      user_id: userId,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      status: CartStatuses.OPEN,
     }
 
-    return this.createByUserId(userId);
+    await this.dbService.query(
+      `INSERT INTO carts (id, user_id, created_at, updated_at, status) VALUES ($1, $2, $3, $4, $5)`,
+      [
+        userCart.id,
+        userCart.user_id,
+        userCart.created_at,
+        userCart.updated_at,
+        userCart.status,
+      ],
+    )
+
+    return userCart
   }
 
-  updateByUserId(userId: string, { items }: Cart): Cart {
-    const { id, ...rest } = this.findOrCreateByUserId(userId);
+  async findOrCreateByUserId(userId: string): Promise<Cart> {
+    const userCart = await this.findByUserId(userId)
+    if (userCart) return userCart
+    return await this.createByUserId(userId)
+  }
+
+  async updateByUserId(userId: string, { items }: Cart): Promise<Cart> {
+    const { id, ...rest } = await this.findOrCreateByUserId(userId)
 
     const updatedCart = {
       id,
       ...rest,
-      items: [ ...items ],
+      items: [...items],
     }
 
-    this.userCarts[ userId ] = { ...updatedCart };
+    const queryList: QueryItem[] = []
+    queryList.push({
+      query: `update carts set updated_at = $1 WHERE user_id = $2 and status = 'OPEN'`,
+      params: [new Date().toISOString(), userId],
+    })
 
-    return { ...updatedCart };
+    updatedCart.items.forEach((item) => {
+      queryList.push({
+        query: `insert into cart_items (cart_id, product_id, count) values ($1, $2, $3)`,
+        params: [id, item.product.id, item.count],
+      })
+    })
+
+    await this.dbService.transaction(queryList)
+
+    return { ...updatedCart }
   }
 
-  removeByUserId(userId): void {
-    this.userCarts[ userId ] = null;
+  async removeByUserId(userId) {
+    await this.dbService.query(
+      `update carts set status = 'ORDERED' WHERE user_id = $1 and status = 'OPEN'`,
+      [userId],
+    )
   }
-
 }

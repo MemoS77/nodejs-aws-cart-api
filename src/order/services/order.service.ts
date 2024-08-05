@@ -1,39 +1,43 @@
-import { Injectable } from '@nestjs/common';
-import { v4 } from 'uuid';
+import { Injectable } from '@nestjs/common'
+import { v4 } from 'uuid'
 
-import { Order } from '../models';
+import { Order } from '../models'
+import { DBService } from '../../db/db.service'
 
 @Injectable()
 export class OrderService {
-  private orders: Record<string, Order> = {}
+  constructor(private dbService: DBService) {}
 
-  findById(orderId: string): Order {
-    return this.orders[ orderId ];
+  async findById(orderId: string): Promise<Order> {
+    const order = await this.dbService.query(
+      'SELECT * FROM orders WHERE id = $1',
+      [orderId],
+    )
+
+    return order.rows[0]
   }
 
-  create(data: any) {
+  async create(data: any) {
     const id = v4()
     const order = {
       ...data,
       id,
       status: 'inProgress',
-    };
-
-    this.orders[ id ] = order;
-
-    return order;
-  }
-
-  update(orderId, data) {
-    const order = this.findById(orderId);
-
-    if (!order) {
-      throw new Error('Order does not exist.');
     }
 
-    this.orders[ orderId ] = {
-      ...data,
-      id: orderId,
-    }
+    await this.dbService.query(
+      'INSERT INTO orders(id, user_id, cart_id, status, total, delivery, comments) VALUES($1, $2, $3, $4)',
+      [
+        id,
+        order.userId,
+        order.cartId,
+        order.status,
+        order.total ?? 0,
+        order.delivery ?? null,
+        order.comments ?? null,
+      ],
+    )
+
+    return order
   }
 }
