@@ -18,4 +18,4 @@ COPY --from=builder /usr/src/app/dist .
 
 EXPOSE 4000
 
-CMD ["node","dist/bundle.js"]
+CMD ["node","bundle.js"]

@@ -28,3 +28,5 @@ export const handler: Handler = async (event: any, context: Context) => {
   server = server || (await bootstrap())
   return awsServerlessExpress.proxy(server, event, context, 'PROMISE').promise
 }
+
+console.log(`App started!!!`)
